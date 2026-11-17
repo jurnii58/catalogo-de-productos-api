@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo{% endblock %}
+{% block contenido %}
+<header class="catalog-hero">
+  <p class="eyebrow">Todo para tu espacio de trabajo</p>
+  <h1>Catálogo de productos</h1>
+  <p>Encuentra el equipo ideal para tu setup.</p>
+</header>
+
+{% if productos %}
+<section aria-labelledby="productos-titulo">
+  <div class="section-heading">
+    <h2 id="productos-titulo">Productos</h2>
+    <small>{{ productos|length }} producto{% if productos|length != 1 %}s{% endif %}</small>
+  </div>
+  <div class="products-grid">
+    {% for p in productos %}
+    <article class="product-card">
+      <div class="product-visual">
+        {% if p.imagen %}
+        <img src="/productos/{{ p.id }}/imagen" alt="{{ p.nombre }}">
+        {% else %}
+        <div class="image-placeholder">
+          <span aria-hidden="true">✦</span>
+          <span>Imagen próximamente</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="product-details">
+        <div class="product-meta">
+          <span class="product-sku">{{ p.sku }}</span>
+          <span class="category-chip">{{ p.categoria.value }}</span>
+        </div>
+        <h3>{{ p.nombre }}</h3>
+        <p class="product-price">${{ "%.2f"|format(p.precio) }}</p>
+        <p class="product-stock">
+          <span class="stock-chip {{ 'available' if p.disponible else 'unavailable' }}">
+            {{ "Disponible" if p.disponible else "Agotado" }}
+          </span>
+          {{ p.existencias }} en existencia
+        </p>
+        <div class="product-actions">
+          <form method="post" action="/web/productos/{{ p.id }}/imagen" enctype="multipart/form-data">
+            <label class="upload-button">
+              {{ "Cambiar foto" if p.imagen else "Subir foto" }}
+              <input name="archivo" type="file" accept="image/png,image/jpeg" required onchange="this.form.submit()">
+            </label>
+          </form>
+          <form method="post" action="/web/favoritos/{{ p.id }}">
+            <button type="submit">♡ <span>Favorito</span></button>
+          </form>
+          <small class="upload-note">PNG o JPEG · máximo 1 MB</small>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<p class="empty-state">El catálogo está vacío. Agrega el primer producto con el formulario de abajo.</p>
+{% endif %}
+
+<section class="form-panel" aria-labelledby="agregar-titulo">
+  <h2 id="agregar-titulo">Agregar producto</h2>
+  <p>Completa los datos para añadir un producto al catálogo.</p>
+  {% if errores.general %}<p><mark>{{ errores.general }}</mark></p>{% endif %}
+  <form method="post" action="/web/productos">
+    <div class="grid">
+      <label>SKU
+        <input name="sku" placeholder="TEC-001" value="{{ datos.sku }}">
+        {% if errores.sku %}<small>{{ errores.sku }}</small>{% endif %}
+      </label>
+      <label>Nombre
+        <input name="nombre" placeholder="Teclado mecánico" value="{{ datos.nombre }}">
+        {% if errores.nombre %}<small>{{ errores.nombre }}</small>{% endif %}
+      </label>
+    </div>
+    <div class="grid">
+      <label>Precio
+        <input name="precio" type="number" step="0.01" min="0.01" placeholder="899.00" value="{{ datos.precio }}">
+        {% if errores.precio %}<small>{{ errores.precio }}</small>{% endif %}
+      </label>
+      <label>Existencias
+        <input name="existencias" type="number" min="0" placeholder="10" value="{{ datos.existencias }}">
+        {% if errores.existencias %}<small>{{ errores.existencias }}</small>{% endif %}
+      </label>
+      <label>Categoría
+        <select name="categoria">
+          {% for c in categorias %}
+          <option value="{{ c.value }}" {% if datos.categoria == c.value %}selected{% endif %}>{{ c.value }}</option>
+          {% endfor %}
+        </select>
+        {% if errores.categoria %}<small>{{ errores.categoria }}</small>{% endif %}
+      </label>
+    </div>
+    <button type="submit">Agregar al catálogo</button>
+  </form>
+</section>
+{% endblock %}
